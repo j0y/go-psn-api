@@ -93,23 +93,12 @@ func (p *PSN) MakeUniversalSearch(searchTerm string, domains []domain) (Universa
 	if err != nil {
 		return UniversalSearchResponse{}, errors.WithStack(err)
 	}
-	req, err := http.NewRequest(http.MethodPost, urlPath, strings.NewReader(string(data)))
-	if err != nil {
-		return UniversalSearchResponse{}, errors.WithStack(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", p.accessToken))
-
-	res, err := p.http.Do(req)
-	if err != nil {
-		return UniversalSearchResponse{}, errors.WithStack(err)
-	}
-	defer res.Body.Close()
 
 	var response UniversalSearchResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err = p.request(http.MethodPost, urlPath, strings.NewReader(string(data)), &response)
 	if err != nil {
-		return response, errors.WithStack(err)
+		return UniversalSearchResponse{}, err
 	}
+
 	return response, nil
 }

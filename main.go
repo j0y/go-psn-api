@@ -11,13 +11,13 @@ var ErrNoCode = errors.New("there was a problem retrieving your PSN access code.
 
 type PSN struct {
 	http                  *http.Client
-	npsso                 string
 	accessToken           string
 	refreshToken          string
 	expiresIn             int32
 	refreshTokenExpiresIn int32
 }
 
+// NewPsnAPI requires npsso for auth. It's available for any logged-in account at https://ca.account.sony.com/api/v1/ssocookie
 func NewPsnAPI(npsso string) (*PSN, error) {
 	psnAPI := &PSN{
 		http: &http.Client{},

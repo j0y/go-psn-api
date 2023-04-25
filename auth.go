@@ -64,7 +64,7 @@ func (p *PSN) exchangeNpssoForCode(npsso string) (string, error) {
 
 	parseQuery, err := url.ParseQuery(params[1])
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	if !parseQuery.Has("code") {
@@ -85,7 +85,7 @@ func (p *PSN) exchangeCodeForAccessToken(accessCode string) (AuthTokensResponse,
 
 	req, err := http.NewRequest(http.MethodPost, urlPath, strings.NewReader(values.Encode()))
 	if err != nil {
-		return AuthTokensResponse{}, err
+		return AuthTokensResponse{}, errors.WithStack(err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Authorization", "Basic MDk1MTUxNTktNzIzNy00MzcwLTliNDAtMzgwNmU2N2MwODkxOnVjUGprYTV0bnRCMktxc1A=")
@@ -119,6 +119,42 @@ func (p *PSN) AuthWithNPSSO(npsso string) error {
 	p.expiresIn = tokens.ExpiresIn
 	p.refreshToken = tokens.RefreshToken
 	p.refreshTokenExpiresIn = tokens.RefreshTokenExpiresIn
+
+	return nil
+}
+
+func (p *PSN) ExchangeRefreshTokenForAuthTokens() error {
+	urlPath := fmt.Sprintf("%s/token", AuthBaseURL)
+
+	values := url.Values{}
+	values.Add("refresh_token", p.refreshToken)
+	values.Add("grant_type", "refresh_token")
+	values.Add("token_format", "jwt")
+	values.Add("scope", "psn:mobile.v2.core psn:clientapp")
+
+	req, err := http.NewRequest(http.MethodPost, urlPath, strings.NewReader(values.Encode()))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", "Basic MDk1MTUxNTktNzIzNy00MzcwLTliNDAtMzgwNmU2N2MwODkxOnVjUGprYTV0bnRCMktxc1A=")
+
+	res, err := p.http.Do(req)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer res.Body.Close()
+
+	var response AuthTokensResponse
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	p.accessToken = response.AccessToken
+	p.refreshToken = response.RefreshToken
+	p.expiresIn = response.ExpiresIn
+	p.refreshTokenExpiresIn = response.RefreshTokenExpiresIn
 
 	return nil
 }

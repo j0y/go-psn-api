@@ -1,7 +1,6 @@
 package psn
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
@@ -381,47 +380,24 @@ func (p *PSN) GetUserTitles(accountID string, offset int32, limit int32) (UserTi
 	}
 	urlPath := fmt.Sprintf("%s/v2/users/%s/titles?limit=%d&offset=%d", GameListBaseURL, accountID, limit, offset)
 
-	req, err := http.NewRequest(http.MethodGet, urlPath, nil)
-	if err != nil {
-		return UserTitlesResponse{}, errors.WithStack(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", p.accessToken))
-
-	res, err := p.http.Do(req)
-	if err != nil {
-		return UserTitlesResponse{}, errors.WithStack(err)
-	}
-	defer res.Body.Close()
-
 	var response UserTitlesResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err := p.request(http.MethodGet, urlPath, nil, &response)
 	if err != nil {
-		return response, errors.WithStack(err)
+		return response, err
 	}
+
 	return response, nil
 }
 
+// GetUserTitle returns user game info. titleID example: "CUSA07994_00"
 func (p *PSN) GetUserTitle(accountID string, titleID string) (UserTitleResponse, error) {
 	urlPath := fmt.Sprintf("%s/v2/users/%s/titles/%s", GameListBaseURL, accountID, titleID)
 
-	req, err := http.NewRequest(http.MethodGet, urlPath, nil)
-	if err != nil {
-		return UserTitleResponse{}, errors.WithStack(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", p.accessToken))
-
-	res, err := p.http.Do(req)
-	if err != nil {
-		return UserTitleResponse{}, errors.WithStack(err)
-	}
-	defer res.Body.Close()
-
 	var response UserTitleResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err := p.request(http.MethodGet, urlPath, nil, &response)
 	if err != nil {
-		return response, errors.WithStack(err)
+		return response, err
 	}
+
 	return response, nil
 }

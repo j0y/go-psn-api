@@ -1,9 +1,7 @@
 package psn
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"time"
 )
@@ -42,23 +40,11 @@ type TrophyTitlesResponse struct {
 func (p *PSN) GetUserTrophyTitles(accountID string) (TrophyTitlesResponse, error) {
 	urlPath := fmt.Sprintf("%s/v1/users/%s/trophyTitles", TrophyBaseURL, accountID)
 
-	req, err := http.NewRequest(http.MethodGet, urlPath, nil)
-	if err != nil {
-		return TrophyTitlesResponse{}, errors.WithStack(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", p.accessToken))
-
-	res, err := p.http.Do(req)
-	if err != nil {
-		return TrophyTitlesResponse{}, errors.WithStack(err)
-	}
-	defer res.Body.Close()
-
 	var response TrophyTitlesResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err := p.request(http.MethodGet, urlPath, nil, &response)
 	if err != nil {
-		return response, errors.WithStack(err)
+		return response, err
 	}
+
 	return response, nil
 }
